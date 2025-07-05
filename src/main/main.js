@@ -1,5 +1,8 @@
 const { app, BrowserWindow, ipcMain, Menu, dialog, shell } = require('electron');
 const path = require('path');
+const http = require('http');
+const https = require('https');
+const url = require('url');
 
 let mainWindow;
 let isQuitting = false;
@@ -14,6 +17,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
+      webSecurity: false,
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, '../assets/icon.png'),
@@ -272,4 +276,58 @@ ipcMain.handle('get-window-state', () => {
     };
   }
   return null;
+});
+
+// HTTP request handler for backend communication
+ipcMain.handle('http-request', async (event, requestUrl, options = {}) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const parsedUrl = url.parse(requestUrl);
+      const isHttps = parsedUrl.protocol === 'https:';
+      const httpModule = isHttps ? https : http;
+      
+      const requestOptions = {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || (isHttps ? 443 : 80),
+        path: parsedUrl.path,
+        method: options.method || 'GET',
+        headers: options.headers || {}
+      };
+
+      const req = httpModule.request(requestOptions, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          try {
+            const jsonData = JSON.parse(data);
+            resolve({
+              ok: res.statusCode >= 200 && res.statusCode < 300,
+              status: res.statusCode,
+              statusText: res.statusMessage,
+              data: jsonData
+            });
+          } catch (parseError) {
+            reject(new Error(`Failed to parse JSON response: ${parseError.message}`));
+          }
+        });
+      });
+
+      req.on('error', (error) => {
+        reject(new Error(`HTTP request failed: ${error.message}`));
+      });
+
+      // Write request body if provided
+      if (options.body) {
+        req.write(options.body);
+      }
+      
+      req.end();
+    } catch (error) {
+      reject(new Error(`HTTP request setup failed: ${error.message}`));
+    }
+  });
 });

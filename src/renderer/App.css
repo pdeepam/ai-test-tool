@@ -990,6 +990,183 @@ body {
   background: #c82333;
 }
 
+/* Quick Test Interface */
+.quick-test-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  height: calc(100vh - 220px);
+}
+
+.quick-test-input,
+.quick-test-output {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-test-input h3,
+.quick-test-output h3 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.instruction-text {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.url-input-group {
+  margin-bottom: 1rem;
+}
+
+.url-input-group label {
+  display: block;
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.url-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.test-input-area {
+  flex: 1;
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.5;
+  resize: none;
+  transition: border-color 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.test-input-area:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.test-input-area:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.input-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.results-container {
+  flex: 1;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  background: #fafbfc;
+  overflow: hidden;
+}
+
+.no-results {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+.no-results p {
+  margin: 0;
+  font-style: italic;
+}
+
+.results-list {
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.result-item {
+  background: white;
+  border-left: 4px solid #6c757d;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.result-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.result-item.passed {
+  border-left-color: #28a745;
+}
+
+.result-item.failed {
+  border-left-color: #dc3545;
+}
+
+.result-item.info {
+  border-left-color: #17a2b8;
+}
+
+.result-item.summary {
+  border-left-color: #6f42c1;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.result-icon {
+  font-size: 1rem;
+  min-width: 20px;
+}
+
+.result-description {
+  flex: 1;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.result-timestamp {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+.result-message {
+  color: #495057;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-left: 1.5rem;
+}
+
 .test-selection-item {
   margin-bottom: 0.75rem;
 }
@@ -1450,6 +1627,10 @@ body {
   
   .progress-stats {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+  
+  .quick-test-layout {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -4,7 +4,7 @@ import './App.css';
 function App() {
   const [appVersion, setAppVersion] = useState('Loading...');
   const [isReady, setIsReady] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('quicktest');
   const [windowState, setWindowState] = useState({ isMaximized: false });
   const [notifications, setNotifications] = useState([]);
 
@@ -90,16 +90,16 @@ function App() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <DashboardTab />;
       case 'testcases':
         return <TestCasesTab />;
       case 'runtests':
         return <RunTestsTab />;
+      case 'quicktest':
+        return <QuickTestTab />;
       case 'reports':
         return <ReportsTab />;
       default:
-        return <DashboardTab />;
+        return <QuickTestTab />;
     }
   };
 
@@ -126,12 +126,6 @@ function App() {
         </div>
         <nav className="tab-navigation">
           <button 
-            className={activeTab === 'dashboard' ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            Dashboard
-          </button>
-          <button 
             className={activeTab === 'testcases' ? 'tab active' : 'tab'}
             onClick={() => setActiveTab('testcases')}
           >
@@ -142,6 +136,12 @@ function App() {
             onClick={() => setActiveTab('runtests')}
           >
             Run Tests
+          </button>
+          <button 
+            className={activeTab === 'quicktest' ? 'tab active' : 'tab'}
+            onClick={() => setActiveTab('quicktest')}
+          >
+            Quick Test
           </button>
           <button 
             className={activeTab === 'reports' ? 'tab active' : 'tab'}
@@ -1435,6 +1435,265 @@ function RunTestsTab() {
           {testConfig.headless && <p>Mode: <strong>Headless</strong> • Timeout: <strong>{testConfig.timeout}ms</strong></p>}
         </div>
       )}
+    </div>
+  );
+}
+
+function QuickTestTab() {
+  const [testInput, setTestInput] = useState('');
+  const [targetUrl, setTargetUrl] = useState('https://google.com');
+  const [isRunning, setIsRunning] = useState(false);
+  const [results, setResults] = useState([]);
+
+  const exampleTests = `Navigate to the homepage and verify the title contains "Google"
+Click on the "About" link and check that the page loads
+Search for "test automation" and verify results appear
+Check that the footer contains copyright information`;
+
+  const parseTestInput = (input) => {
+    // Split by lines and filter out empty lines
+    const lines = input.split('\n').filter(line => line.trim());
+    return lines.map((line, index) => ({
+      id: `quick_test_${index + 1}`,
+      name: `Quick Test ${index + 1}`,
+      description: line.trim(),
+      target_url: targetUrl,
+      steps: [
+        'Navigate to the target page',
+        'Execute the requested action',
+        'Verify the expected result'
+      ],
+      expected_results: [
+        'Page loads successfully',
+        'Action completes without errors',
+        'Expected content is found'
+      ],
+      priority: 'medium'
+    }));
+  };
+
+  const addResult = (description, status, message) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setResults(prev => [...prev, {
+      id: Date.now(),
+      description,
+      status,
+      message,
+      timestamp
+    }]);
+  };
+
+  const runQuickTests = async () => {
+    if (!testInput.trim()) {
+      alert('Please enter some test cases to run');
+      return;
+    }
+
+    setIsRunning(true);
+    setResults([]);
+
+    const testCases = parseTestInput(testInput);
+    
+    addResult('Starting test execution...', 'info', `Running ${testCases.length} test(s) on ${targetUrl}`);
+
+    try {
+      const requestBody = {
+        test_cases: testCases,
+        config: {
+          viewport_width: 1920,
+          viewport_height: 1080,
+          browser_type: 'chromium',
+          headless: false,
+          timeout: 30000,
+          max_steps: 15,
+          enable_screenshots: true,
+          wait_for_network_idle: true
+        }
+      };
+
+      // Start test session
+      const response = await window.electronAPI.httpRequest('http://127.0.0.1:8000/test/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
+      }
+
+      const startResult = response.data;
+      const sessionId = startResult.session_id;
+      
+      addResult('Test session started', 'info', `Session ID: ${sessionId}`);
+
+      // Poll for progress updates
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await window.electronAPI.httpRequest(`http://127.0.0.1:8000/test/status/${sessionId}`);
+          if (statusResponse.ok) {
+            const statusData = statusResponse.data;
+            
+            // Check if completed
+            if (statusData.status === 'completed' || statusData.status === 'error' || statusData.status === 'stopped') {
+              clearInterval(pollInterval);
+              
+              // Get final results
+              const resultsResponse = await window.electronAPI.httpRequest(`http://127.0.0.1:8000/test/results/${sessionId}`);
+              if (resultsResponse.ok) {
+                const resultsData = resultsResponse.data;
+                
+                // Process each test result
+                resultsData.results.forEach((result, index) => {
+                  const testDescription = testCases[index]?.description || `Test ${index + 1}`;
+                  const status = result.status === 'passed' ? 'passed' : 'failed';
+                  const message = result.message || (status === 'passed' ? 'Test completed successfully' : 'Test failed');
+                  
+                  addResult(testDescription, status, message);
+                });
+
+                // Add summary
+                const { passed, failed, total } = resultsData.summary;
+                addResult('Test execution completed', 'summary', `${passed}/${total} tests passed (${failed} failed)`);
+              }
+              
+              setIsRunning(false);
+            }
+          }
+        } catch (error) {
+          console.error('Error polling status:', error);
+          clearInterval(pollInterval);
+          addResult('Status polling error', 'failed', error.message);
+          setIsRunning(false);
+        }
+      }, 3000); // Poll every 3 seconds
+
+      // Clean up polling after 5 minutes max
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (isRunning) {
+          addResult('Test execution timeout', 'failed', 'Tests took too long to complete');
+          setIsRunning(false);
+        }
+      }, 300000);
+
+    } catch (error) {
+      addResult('Connection failed', 'failed', `Could not connect to backend: ${error.message}`);
+      addResult('Tip', 'info', 'Make sure the backend is running with: python src/backend/server.py');
+      setIsRunning(false);
+    }
+  };
+
+  const getResultIcon = (status) => {
+    switch (status) {
+      case 'passed': return '✅';
+      case 'failed': return '❌';
+      case 'info': return 'ℹ️';
+      case 'summary': return '📊';
+      default: return '•';
+    }
+  };
+
+  const getResultColor = (status) => {
+    switch (status) {
+      case 'passed': return '#28a745';
+      case 'failed': return '#dc3545';
+      case 'info': return '#17a2b8';
+      case 'summary': return '#6f42c1';
+      default: return '#6c757d';
+    }
+  };
+
+  return (
+    <div className="tab-content">
+      <div className="tab-header">
+        <h2>Quick Test</h2>
+        <div className="tab-actions">
+          <button 
+            className="primary-btn" 
+            onClick={runQuickTests}
+            disabled={isRunning || !testInput.trim()}
+          >
+            {isRunning ? '⏳ Running...' : '🚀 Run Tests'}
+          </button>
+        </div>
+      </div>
+
+      <div className="quick-test-layout">
+        <div className="quick-test-input">
+          <h3>Test Cases</h3>
+          <p className="instruction-text">
+            Write your test cases in natural language, one per line:
+          </p>
+          
+          <div className="url-input-group">
+            <label>Target URL:</label>
+            <input
+              type="url"
+              value={targetUrl}
+              onChange={(e) => setTargetUrl(e.target.value)}
+              placeholder="https://example.com"
+              className="url-input"
+            />
+          </div>
+
+          <textarea
+            className="test-input-area"
+            value={testInput}
+            onChange={(e) => setTestInput(e.target.value)}
+            placeholder={exampleTests}
+            rows={8}
+            disabled={isRunning}
+          />
+          
+          <div className="input-actions">
+            <button 
+              className="secondary-btn"
+              onClick={() => setTestInput(exampleTests)}
+              disabled={isRunning}
+            >
+              📝 Load Examples
+            </button>
+            <button 
+              className="secondary-btn"
+              onClick={() => setTestInput('')}
+              disabled={isRunning}
+            >
+              🗑️ Clear
+            </button>
+          </div>
+        </div>
+
+        <div className="quick-test-output">
+          <h3>Results</h3>
+          <div className="results-container">
+            {results.length === 0 ? (
+              <div className="no-results">
+                <p>Enter test cases and click "Run Tests" to see results here.</p>
+              </div>
+            ) : (
+              <div className="results-list">
+                {results.map((result) => (
+                  <div 
+                    key={result.id} 
+                    className={`result-item ${result.status}`}
+                    style={{ borderLeftColor: getResultColor(result.status) }}
+                  >
+                    <div className="result-header">
+                      <span className="result-icon">{getResultIcon(result.status)}</span>
+                      <span className="result-description">{result.description}</span>
+                      <span className="result-timestamp">{result.timestamp}</span>
+                    </div>
+                    <div className="result-message">{result.message}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

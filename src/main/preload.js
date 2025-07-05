@@ -47,5 +47,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Report generation
   generateReport: (testResults) => ipcRenderer.invoke('generate-report', testResults),
-  exportReport: (report, format) => ipcRenderer.invoke('export-report', report, format)
+  exportReport: (report, format) => ipcRenderer.invoke('export-report', report, format),
+  
+  // HTTP requests for backend communication
+  httpRequest: (url, options) => ipcRenderer.invoke('http-request', url, options)
 });
