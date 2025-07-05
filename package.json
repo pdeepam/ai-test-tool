@@ -1,0 +1,76 @@
+{
+  "name": "ai-test-tool",
+  "version": "1.0.0",
+  "description": "AI-powered web testing tool using browser-use",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "cross-env NODE_ENV=development electron . --enable-logging",
+    "dev:watch": "cross-env NODE_ENV=development nodemon --exec electron . --enable-logging",
+    "dev:renderer": "webpack serve --mode development",
+    "build:renderer": "webpack --mode production",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "dist": "electron-builder --publish=never",
+    "pack": "electron-builder --dir",
+    "clean": "rimraf dist node_modules/.cache",
+    "postinstall": "electron-builder install-app-deps",
+    "lint": "echo 'Linting will be added with React setup'",
+    "test": "echo 'Tests will be added in later phases'",
+    "backend:start": "source venv/bin/activate && python src/backend/start_server.py",
+    "backend:test": "source venv/bin/activate && python test_api.py"
+  },
+  "keywords": [
+    "ai",
+    "testing",
+    "automation",
+    "browser-use",
+    "electron"
+  ],
+  "author": "AI Test Tool Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@babel/preset-react": "^7.22.0",
+    "babel-loader": "^9.1.3",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.8.1",
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "html-webpack-plugin": "^5.5.3",
+    "nodemon": "^3.1.10",
+    "rimraf": "^5.0.10",
+    "style-loader": "^3.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "build": {
+    "appId": "com.aitesttool.app",
+    "productName": "AI Test Tool",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

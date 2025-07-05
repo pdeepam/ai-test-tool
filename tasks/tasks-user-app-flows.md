@@ -30,23 +30,23 @@ Based on the user-app-flows.md PRD document.
 
 ## Tasks
 
-- [ ] 1.0 Set up Electron Desktop Application Foundation
-  - [ ] 1.1 Initialize Electron project with main and renderer processes
-  - [ ] 1.2 Configure build scripts and development environment
-  - [ ] 1.3 Set up React integration with Electron renderer process
-  - [ ] 1.4 Create basic window management and app lifecycle handling
-  - [ ] 1.5 Implement inter-process communication (IPC) between main and renderer
+- [x] 1.0 Set up Electron Desktop Application Foundation
+  - [x] 1.1 Initialize Electron project with main and renderer processes
+  - [x] 1.2 Configure build scripts and development environment
+  - [x] 1.3 Set up React integration with Electron renderer process
+  - [x] 1.4 Create basic window management and app lifecycle handling
+  - [x] 1.5 Implement inter-process communication (IPC) between main and renderer
 
-- [ ] 2.0 Create Python Backend Service
-  - [ ] 2.1 Set up Python virtual environment and install browser-use dependencies
-  - [ ] 2.2 Create simple web server (Flask/FastAPI) for handling test requests
-  - [ ] 2.3 Implement browser-use agent creation and management
-  - [ ] 2.4 Create API endpoints for test execution and status updates
-  - [ ] 2.5 Add health check and service initialization endpoints
+- [x] 2.0 Create Python Backend Service
+  - [x] 2.1 Set up Python virtual environment and install browser-use dependencies
+  - [x] 2.2 Create simple web server (Flask/FastAPI) for handling test requests
+  - [x] 2.3 Implement browser-use agent creation and management
+  - [x] 2.4 Create API endpoints for test execution and status updates
+  - [x] 2.5 Add health check and service initialization endpoints
 
 - [ ] 3.0 Build User Interface Components
   - [ ] 3.1 Create login screen with authentication form
-  - [ ] 3.2 Build main dashboard with tab navigation (Test Cases, Run Tests, Reports)
+  - [x] 3.2 Build main dashboard with tab navigation (Test Cases, Run Tests, Reports)
   - [ ] 3.3 Implement test case manager with file tree and markdown editor
   - [ ] 3.4 Create test configuration panel with URL input and viewport selection
   - [ ] 3.5 Build test execution dashboard with progress indicators and live log

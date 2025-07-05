@@ -1,0 +1,10 @@
+{
+  "watch": ["src/main/**/*"],
+  "ext": "js,json",
+  "ignore": ["src/renderer/**/*", "node_modules/**/*", "dist/**/*"],
+  "exec": "electron . --enable-logging",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": 1000
+}
