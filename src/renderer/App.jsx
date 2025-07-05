@@ -1444,6 +1444,7 @@ function QuickTestTab() {
   const [targetUrl, setTargetUrl] = useState('https://google.com');
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState([]);
+  const [useExistingChrome, setUseExistingChrome] = useState(true);
 
   const exampleTests = `Navigate to the homepage and verify the title contains "Google"
 Click on the "About" link and check that the page loads
@@ -1507,7 +1508,9 @@ Check that the footer contains copyright information`;
           timeout: 30000,
           max_steps: 15,
           enable_screenshots: true,
-          wait_for_network_idle: true
+          wait_for_network_idle: true,
+          keep_alive: true,
+          use_existing_chrome: useExistingChrome
         }
       };
 
@@ -1625,8 +1628,50 @@ Check that the footer contains copyright information`;
         <div className="quick-test-input">
           <h3>Test Cases</h3>
           <p className="instruction-text">
-            Write your test cases in natural language, one per line:
+            Write your test cases in natural language, one per line.
           </p>
+          
+          <div className="browser-selection">
+            <h4>Browser Option</h4>
+            <div className="browser-choice">
+              <label className="browser-option">
+                <input
+                  type="radio"
+                  name="browser"
+                  checked={useExistingChrome}
+                  onChange={() => setUseExistingChrome(true)}
+                  disabled={isRunning}
+                />
+                <div className="option-content">
+                  <span className="option-title">🌐 Use Existing Chrome</span>
+                  <span className="option-desc">Connect to your current Chrome browser</span>
+                </div>
+              </label>
+              
+              <label className="browser-option">
+                <input
+                  type="radio"
+                  name="browser"
+                  checked={!useExistingChrome}
+                  onChange={() => setUseExistingChrome(false)}
+                  disabled={isRunning}
+                />
+                <div className="option-content">
+                  <span className="option-title">🚀 New Chromium</span>
+                  <span className="option-desc">Launch fresh browser instance</span>
+                </div>
+              </label>
+            </div>
+            
+            {useExistingChrome && (
+              <div className="chrome-setup-info">
+                <p className="setup-hint">
+                  💡 First, start Chrome with debugging: 
+                  <code className="inline-command">open -a "Google Chrome" --args --remote-debugging-port=9222</code>
+                </p>
+              </div>
+            )}
+          </div>
           
           <div className="url-input-group">
             <label>Target URL:</label>
@@ -1671,7 +1716,9 @@ Check that the footer contains copyright information`;
           <div className="results-container">
             {results.length === 0 ? (
               <div className="no-results">
-                <p>Enter test cases and click "Run Tests" to see results here.</p>
+                <p>📋 <strong>Test results will appear here</strong></p>
+                <p>Enter test cases in the left panel and click "Run Tests" to see results.</p>
+                <p>Results include pass/fail status, execution details, and error messages.</p>
               </div>
             ) : (
               <div className="results-list">

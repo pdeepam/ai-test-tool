@@ -7,12 +7,12 @@ import logging
 import os
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-import json
 
 from browser_use import Agent, BrowserSession, BrowserProfile
 from browser_use.llm import ChatOpenAI, ChatAnthropic, ChatGoogle
 
 logger = logging.getLogger(__name__)
+
 
 class TestAgent:
     """Individual test agent for executing a single test case"""
@@ -30,25 +30,57 @@ class TestAgent:
     async def create_agent(self, llm_provider):
         """Create browser-use agent with specified configuration"""
         try:
-            # Create browser profile
-            browser_profile = BrowserProfile(
-                browser_type=self.config.get("browser_type", "chromium"),
-                headless=self.config.get("headless", False),
-                viewport={
-                    "width": self.config.get("viewport_width", 1920),
-                    "height": self.config.get("viewport_height", 1080)
-                },
-                wait_for_network_idle_page_load_time=3.0
-            )
+            # Check user's browser preference
+            use_existing_chrome = self.config.get("use_existing_chrome", True)
             
-            # Create browser session
-            self.browser_session = BrowserSession(
-                browser_profile=browser_profile,
-                keep_alive=False
-            )
+            if use_existing_chrome:
+                # Try to connect to existing Chrome first (using standard port 9222)
+                try:
+                    self.browser_session = BrowserSession(cdp_url="http://localhost:9222")
+                    await self.browser_session.start()
+                    logger.info("Connected to existing Chrome browser")
+                except Exception as e:
+                    # Fall back to new browser if no existing one
+                    logger.warning(f"Could not connect to existing Chrome: {e}")
+                    logger.info("Falling back to new browser instance")
+                    use_existing_chrome = False
             
-            # Start browser session
-            await self.browser_session.start()
+            if not use_existing_chrome:
+                # Create new browser instance
+                logger.info("Creating new Chromium browser instance")
+                
+                browser_profile = BrowserProfile(
+                    browser_type=self.config.get("browser_type", "chromium"),
+                    headless=self.config.get("headless", False),
+                    viewport={
+                        "width": self.config.get("viewport_width", 1920),
+                        "height": self.config.get("viewport_height", 1080)
+                    },
+                    wait_for_network_idle_page_load_time=3.0,
+                    extra_chromium_args=[
+                        "--no-first-run",           # Skip first-run experience
+                        "--no-default-browser-check", # Don't check if default browser
+                        "--disable-default-apps",   # Don't load default apps
+                        "--disable-extensions",     # Disable extensions
+                        "--window-size=1920,1080", # Set window size
+                        "--window-position=0,0",   # Set window position
+                        "--force-device-scale-factor=1", # Prevent scaling issues
+                        "--disable-background-timer-throttling",  # Better for automation
+                        "--disable-renderer-backgrounding",       # Better for automation
+                        "--disable-backgrounding-occluded-windows", # Better for automation
+                        "--new-window",             # Open as new window
+                        "--homepage=about:blank",   # Start with blank page
+                        "--start-maximized",        # Start maximized
+                        "--disable-web-security",  # Disable web security for testing
+                        "--disable-features=VizDisplayCompositor", # Fix display issues
+                        "--kiosk",                  # Full screen mode
+                        "--app=about:blank"         # Run as app to avoid small window
+                    ]
+                )
+                
+                self.browser_session = BrowserSession(browser_profile=browser_profile)
+                await self.browser_session.start()
+                logger.info("Started new Chromium browser instance")
             
             # Build natural language task from test case
             task_description = self._build_task_description()
