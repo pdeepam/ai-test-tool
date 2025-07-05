@@ -23,6 +23,11 @@ Login Screen (Local or SSO)
 Dashboard/Main Interface
 ```
 
+**What User Sees:**
+- **App Launch**: Desktop app window opens with AI Test Tool logo and loading indicator
+- **Login Screen**: Simple form with username/password fields and "Sign In" button
+- **Main Dashboard**: Clean interface with "Test Cases", "Run Tests", and "Reports" tabs
+
 **User Actions:**
 - Opens AI Test Tool desktop app
 - Enters credentials (local account or SSO)
@@ -43,6 +48,12 @@ Test Case Editor
     ↓
 Save Test Cases
 ```
+
+**What User Sees:**
+- **Test Cases Tab**: List of existing test cases with status indicators (✅ ❌ ⏳)
+- **"+ New Test Case" Button**: Large, prominent button to create new tests
+- **Test Case Editor**: Simple text editor with markdown preview, syntax highlighting
+- **File Tree**: Organized view of test case files with drag-and-drop support
 
 **User Actions:**
 - Create new test cases in natural language
@@ -82,6 +93,12 @@ Browser Configuration
 Test Parameters
 ```
 
+**What User Sees:**
+- **Test Selection Panel**: Checkboxes next to each test case, "Select All" option
+- **Configuration Form**: Simple form with URL input field and dropdown menus
+- **Visual Viewport Selector**: Icons for Desktop, Tablet, Mobile with resolution display
+- **"Run Tests" Button**: Large green button that becomes active when tests are selected
+
 **User Actions:**
 - Select test cases to run
 - Configure target application URL
@@ -105,6 +122,13 @@ Test Completion
 Results Preview
 ```
 
+**What User Sees:**
+- **Execution Dashboard**: Split screen with progress panel and browser view
+- **Progress Indicators**: Overall progress bar (0-100%) and current test name
+- **Live Activity Log**: Scrolling text showing "Navigating to login page...", "Checking form elements...", etc.
+- **Browser Window**: Separate browser window where user can watch AI agent work
+- **Status Cards**: Each test case shows ⏳ Running → ✅ Passed or ❌ Failed
+
 **User Actions:**
 - Click "Run Tests" button
 - Monitor progress in real-time
@@ -127,6 +151,13 @@ Screenshot Review
     ↓
 Issue Classification
 ```
+
+**What User Sees:**
+- **Results Summary**: Large cards showing "3 Tests Passed", "1 Issue Found", "2 Minutes Runtime"
+- **Test Case List**: Updated test cases with checkmarks, X marks, and issue counts
+- **Issue Details Panel**: Click any test case to see AI analysis and findings
+- **Updated Test Files**: Test case files now show inline results and status
+- **Simple Report**: Generated markdown file with test run summary
 
 **User Actions:**
 - Review test results summary
@@ -152,6 +183,13 @@ Export/Share
 Integration (Jira, GitHub, etc.)
 ```
 
+**What User Sees:**
+- **File Explorer**: Updated test case files with embedded results visible
+- **Report Preview**: Live preview of generated markdown report
+- **Export Dialog**: Simple dialog with "Save Report" and "Copy to Clipboard" buttons
+- **Success Message**: "Report saved to test-run-2024-01-15.md" with file location
+- **Quick Actions**: Buttons to "Open in File Explorer" or "Copy Report Text"
+
 **User Actions:**
 - Select issues to include in report
 - Customize report format and content
@@ -160,10 +198,9 @@ Integration (Jira, GitHub, etc.)
 - Create tickets in issue tracking systems
 
 **Report Formats:**
-- **PDF**: Professional reports for stakeholders
-- **Markdown**: Developer-friendly format
-- **HTML**: Interactive web reports
-- **JSON**: API integration format
+- **Updated Test Cases**: Test files with inline results and status
+- **Summary Report**: Simple markdown file with test run overview
+- **Copy/Paste Ready**: Text format ready for Slack, email, or tickets
 
 ---
 
@@ -173,11 +210,11 @@ Integration (Jira, GitHub, etc.)
 ```
 Desktop App (Electron)
     ↓
-Python Backend Service
+Simple Python Service
     ↓
-browser-use (with integrated LLM)
+browser-use Agent.run()
     ↓
-Automated Browser (Playwright)
+[browser-use handles everything]
     ↓
 Target Web Application
 ```
@@ -203,39 +240,35 @@ Renderer Process
 - User interface and interaction
 - File management (test cases, reports)
 - Communication with Python backend
-- Local data storage and caching
+- Report generation (markdown files)
+- Test status tracking and updates
 
 #### 2. **Python Backend Service**
 ```python
-FastAPI/Flask Web Server
-├── Test Case Parser
-├── browser-use Integration (includes LLM)
-├── Result Processor
-└── Report Generator
+Simple Web Server
+├── Test Case Handler
+└── browser-use Agent Manager
 ```
 
 **Responsibilities:**
-- Parse natural language test cases
-- Execute browser automation
-- Process AI analysis results
-- Generate structured reports
-- Manage test execution lifecycle
+- Receive test cases from desktop app
+- Create browser-use agents with natural language tasks
+- Return raw results to desktop app
 
-#### 3. **Browser Integration Layer**
-```python
-browser-use Agent
-├── Playwright Browser Management
-├── Automatic Browser Launch/Connection
-├── AI-Driven Navigation & Interaction
-├── Built-in Screenshot Capture
-└── Built-in LLM Integration (ChatGoogle)
+#### 3. **Report Generation Layer (Desktop App)**
+```javascript
+Electron App
+├── Test Results Collection
+├── Markdown Report Generator
+├── File System Operations
+└── Test Status Tracking
 ```
 
 **Key Features:**
-- **Automated Browser Management**: browser-use handles all browser connections automatically
-- **Playwright Integration**: Uses Playwright for reliable browser automation
-- **AI-First Design**: Designed specifically for AI agent browser control
-- **Zero Configuration**: No manual CDP setup required
+- **Simple Text Files**: Generate markdown reports locally
+- **Test Case Tracking**: Update status against each test case
+- **Local Storage**: All reports saved as .md files
+- **No Complex Processing**: Just format browser-use results into readable text
 
 ---
 
@@ -256,10 +289,10 @@ User Interface Loads
 
 **Technical Steps:**
 1. Electron app initializes main process
-2. Python backend service starts (FastAPI/Flask)
-3. browser-use agent initialization
-4. LLM connection verified via browser-use
-5. User interface renders with ready state
+2. Simple Python service starts 
+3. Verify browser-use package is available
+4. User interface renders with ready state
+5. (browser-use agents created on-demand per test)
 
 ### 2. **Test Case Processing**
 ```
@@ -267,40 +300,33 @@ User Inputs Test Case
     ↓
 Desktop App → Python Service
     ↓
-Natural Language Parser
+browser-use Agent Creation
     ↓
-Test Steps Extraction
-    ↓
-Execution Plan Generation
+Direct Task Assignment
 ```
 
 **Data Flow:**
 - Test case markdown → Python service
-- Test case passed directly to browser-use agent
-- AI agent interprets natural language instructions
-- Execution plan generated by browser-use automatically
+- Create browser-use Agent with natural language task
+- browser-use handles all parsing and execution planning internally
 
 ### 3. **Test Execution Pipeline**
 ```
 Test Start Command
     ↓
-browser-use Agent Initialization
+agent = Agent(task="natural language test", llm=ChatGoogle())
     ↓
-Automated Browser Launch
-    ↓
-AI-Driven Step Execution
-    ↓
-AI Analysis at Each Step
+result = await agent.run()
     ↓
 Result Collection
 ```
 
 **Execution Details:**
-- **Browser Control**: browser-use automatically manages browser via Playwright
-- **Step Execution**: Each test step executed sequentially by AI agent
-- **AI Analysis**: LLM analyzes page state after each action via browser-use
-- **Screenshot Capture**: Visual evidence collected automatically
-- **Error Handling**: Graceful failure recovery and logging
+- **Simple API**: Just create Agent and call run()
+- **Everything Automated**: browser-use handles browser, navigation, analysis
+- **Built-in Intelligence**: LLM integration is internal to browser-use
+- **Automatic Screenshots**: Visual evidence collected by browser-use
+- **Zero Configuration**: No manual setup required
 
 ### 4. **Real-time Communication**
 ```
@@ -319,46 +345,65 @@ Live Status Display
 - **Status Updates**: Current test, step, and overall progress
 - **Error Reporting**: Immediate notification of failures
 
-### 5. **Result Processing**
+### 5. **Result Processing (Desktop App)**
 ```
 Test Completion
     ↓
-AI Analysis Results
+browser-use Results → Desktop App
     ↓
-Screenshot Organization
+Update Test Case Status
     ↓
-Issue Classification
+Generate Markdown Report
     ↓
-Report Generation
+Save to Local File
 ```
 
 **Processing Steps:**
-1. Collect all test execution data
-2. Process AI analysis for each step
-3. Organize screenshots by issue/test
-4. Classify issues by type and severity
-5. Generate structured reports
+1. Receive results from browser-use agent
+2. Update test case markdown with results
+3. Generate simple text-based report
+4. Save updated files locally
+5. Display results in UI
 
 ### 6. **Data Storage & Management**
 ```
 Local File System
 ├── test_cases/
-│   ├── login-flow.md
-│   └── checkout-process.md
+│   ├── login-flow.md (updated with results)
+│   └── checkout-process.md (updated with results)
 ├── reports/
-│   ├── bugs/
-│   │   └── 2024-01-15-login-issues.md
-│   └── screenshots/
-│       └── login-error-001.png
+│   └── test-run-2024-01-15.md (simple summary)
 └── config/
     └── app-settings.json
 ```
 
 **File Organization:**
-- **Test Cases**: Markdown files with natural language tests
-- **Reports**: Time-stamped bug reports with evidence
-- **Screenshots**: Organized by test run and issue
+- **Test Cases**: Markdown files updated with test results inline
+- **Reports**: Simple summary reports per test run
 - **Configuration**: User preferences and app settings
+
+**Example Updated Test Case:**
+```markdown
+# Test Case: Login Functionality
+**Target URL:** https://myapp.com/login
+**Status:** ✅ PASSED
+**Last Run:** 2024-01-15 14:30
+**Issues Found:** 1 Medium
+
+## Test Steps:
+1. Navigate to login page ✅
+2. Verify form elements are visible ✅ 
+3. Try empty form submission ✅
+4. Enter invalid credentials ✅
+5. Enter valid credentials ✅
+
+## Results:
+✅ **PASSED**: Login functionality works correctly
+⚠️  **ISSUE**: Login button appears small on mobile (44px recommended)
+
+## AI Analysis:
+"The login page functions correctly with proper validation and error handling. However, the login button height is 36px which is below the recommended 44px touch target size for mobile accessibility."
+```
 
 ---
 
