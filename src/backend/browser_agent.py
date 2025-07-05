@@ -54,7 +54,7 @@ class TestAgent:
                     headless=self.config.get("headless", False),
                     viewport={
                         "width": self.config.get("viewport_width", 1920),
-                        "height": self.config.get("viewport_height", 1080)
+                        "height": self.config.get("viewport_height", 1200)
                     },
                     wait_for_network_idle_page_load_time=3.0,
                     extra_chromium_args=[
@@ -62,19 +62,19 @@ class TestAgent:
                         "--no-default-browser-check", # Don't check if default browser
                         "--disable-default-apps",   # Don't load default apps
                         "--disable-extensions",     # Disable extensions
-                        "--window-size=1920,1080", # Set window size
+                        "--start-maximized",        # Start maximized
+                        "--start-fullscreen",       # Start in fullscreen
+                        "--window-size=1920,1200", # Set window size
                         "--window-position=0,0",   # Set window position
                         "--force-device-scale-factor=1", # Prevent scaling issues
                         "--disable-background-timer-throttling",  # Better for automation
                         "--disable-renderer-backgrounding",       # Better for automation
                         "--disable-backgrounding-occluded-windows", # Better for automation
-                        "--new-window",             # Open as new window
-                        "--homepage=about:blank",   # Start with blank page
-                        "--start-maximized",        # Start maximized
                         "--disable-web-security",  # Disable web security for testing
                         "--disable-features=VizDisplayCompositor", # Fix display issues
-                        "--kiosk",                  # Full screen mode
-                        "--app=about:blank"         # Run as app to avoid small window
+                        "--disable-dev-shm-usage", # Overcome limited resource problems
+                        "--no-sandbox",             # Disable sandboxing
+                        "--disable-gpu-sandbox"     # Disable GPU sandboxing
                     ]
                 )
                 
