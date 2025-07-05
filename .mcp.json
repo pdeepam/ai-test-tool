@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+   
+    "browser": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@browsermcp/mcp"
+      ],
+      "env": {
+        "BROWSER_MCP_HEADLESS": "false"
+      }
+  }
+  }
+}
