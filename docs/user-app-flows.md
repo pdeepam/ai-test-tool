@@ -478,4 +478,29 @@ Report Generation
 
 ---
 
+## 🛠️ Tech Stack
+
+### **Desktop Application**
+- **Electron** - Cross-platform desktop app framework
+- **React/HTML/CSS** - User interface components
+- **Node.js** - Desktop app backend and file operations
+
+### **AI Testing Engine**
+- **Python 3.11+** - Backend service language
+- **browser-use** - AI browser automation (includes Playwright)
+- **Google Gemini API** - LLM for intelligent testing (via browser-use)
+
+### **Development Tools**
+- **Git** - Version control
+- **Markdown** - Test cases and reports format
+- **JSON/YAML** - Configuration files
+
+### **Key Dependencies**
+- `browser-use` - Handles all browser automation and AI integration
+- `electron` - Desktop app packaging and distribution
+- `python-dotenv` - Environment configuration
+- No complex frameworks or databases required
+
+---
+
 This document serves as the foundation for development and ensures all stakeholders understand both the user experience and technical implementation approach.
