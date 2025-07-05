@@ -10,7 +10,7 @@ from datetime import datetime
 import json
 
 from browser_use import Agent, BrowserSession, BrowserProfile
-from browser_use.llm import ChatOpenAI, ChatAnthropic, ChatGoogleGenerativeAI
+from browser_use.llm import ChatOpenAI, ChatAnthropic, ChatGoogle
 
 logger = logging.getLogger(__name__)
 
@@ -194,9 +194,9 @@ class BrowserAgentManager:
         try:
             # Check for Google Gemini API key first (recommended by browser-use)
             if os.getenv("GOOGLE_API_KEY"):
-                self.llm_provider = ChatGoogleGenerativeAI(
+                self.llm_provider = ChatGoogle(
                     model="gemini-1.5-pro",
-                    google_api_key=os.getenv("GOOGLE_API_KEY"),
+                    api_key=os.getenv("GOOGLE_API_KEY"),
                     temperature=0.0
                 )
                 logger.info("Using Google Gemini LLM provider")

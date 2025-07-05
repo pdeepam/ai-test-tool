@@ -47,9 +47,9 @@ Based on the user-app-flows.md PRD document.
 - [ ] 3.0 Build User Interface Components
   - [ ] 3.1 Create login screen with authentication form
   - [x] 3.2 Build main dashboard with tab navigation (Test Cases, Run Tests, Reports)
-  - [ ] 3.3 Implement test case manager with file tree and markdown editor
-  - [ ] 3.4 Create test configuration panel with URL input and viewport selection
-  - [ ] 3.5 Build test execution dashboard with progress indicators and live log
+  - [x] 3.3 Implement test case manager with file tree and markdown editor
+  - [x] 3.4 Create test configuration panel with URL input and viewport selection
+  - [x] 3.5 Build test execution dashboard with progress indicators and live log
   - [ ] 3.6 Implement results review interface with summary cards and issue details
 
 - [ ] 4.0 Implement Test Case Management

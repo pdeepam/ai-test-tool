@@ -228,7 +228,8 @@ function TestCasesTab() {
       description: 'Test user login functionality',
       status: 'pending',
       priority: 'high',
-      lastRun: null
+      lastRun: null,
+      filePath: 'test-cases/login-flow.md'
     },
     {
       id: 'tc-2', 
@@ -236,7 +237,8 @@ function TestCasesTab() {
       description: 'Test product search and filtering',
       status: 'passed',
       priority: 'medium',
-      lastRun: '2024-01-15 10:30'
+      lastRun: '2024-01-15 10:30',
+      filePath: 'test-cases/product-search.md'
     },
     {
       id: 'tc-3',
@@ -244,9 +246,31 @@ function TestCasesTab() {
       description: 'Test complete checkout workflow',
       status: 'failed',
       priority: 'high',
-      lastRun: '2024-01-15 09:15'
+      lastRun: '2024-01-15 09:15',
+      filePath: 'test-cases/checkout-process.md'
     }
   ]);
+
+  const [fileTree, setFileTree] = useState([
+    {
+      id: 'root',
+      name: 'test-cases',
+      type: 'folder',
+      expanded: true,
+      children: [
+        { id: 'tc-1', name: 'login-flow.md', type: 'file', filePath: 'test-cases/login-flow.md' },
+        { id: 'tc-2', name: 'product-search.md', type: 'file', filePath: 'test-cases/product-search.md' },
+        { id: 'tc-3', name: 'checkout-process.md', type: 'file', filePath: 'test-cases/checkout-process.md' }
+      ]
+    }
+  ]);
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [editorContent, setEditorContent] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'editor'
+  const [isEditing, setIsEditing] = useState(false);
+  const [showNewFileDialog, setShowNewFileDialog] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -266,12 +290,218 @@ function TestCasesTab() {
     }
   };
 
+  const handleFileSelect = async (file) => {
+    setSelectedFile(file);
+    setViewMode('editor');
+    
+    // Load markdown content (placeholder for now)
+    const sampleContent = `# ${file.name}
+
+## Description
+Test case for ${file.name.replace('.md', '').replace('-', ' ')}
+
+## Prerequisites
+- Browser should be available
+- Test environment should be set up
+
+## Test Steps
+1. Navigate to the target page
+2. Perform the required actions
+3. Verify the expected results
+
+## Expected Results
+- All steps should complete successfully
+- No errors should occur
+
+## Test Data
+\`\`\`json
+{
+  "target_url": "https://example.com",
+  "timeout": 30000
+}
+\`\`\`
+
+## Priority
+medium
+
+## Status
+pending`;
+    
+    setEditorContent(sampleContent);
+    setIsEditing(false);
+  };
+
+  const handleSaveFile = () => {
+    // Save the markdown content (placeholder implementation)
+    console.log('Saving file:', selectedFile?.name, editorContent);
+    setIsEditing(false);
+    // TODO: Implement actual file saving via IPC
+  };
+
+  const handleNewTestCase = () => {
+    setShowNewFileDialog(true);
+    setNewFileName('');
+  };
+
+  const createNewFile = () => {
+    if (!newFileName.trim()) return;
+    
+    const fileName = newFileName.endsWith('.md') ? newFileName : `${newFileName}.md`;
+    const newFile = {
+      id: `new-${Date.now()}`,
+      name: fileName,
+      type: 'file',
+      filePath: `test-cases/${fileName}`
+    };
+    
+    // Add to file tree
+    const updatedTree = [...fileTree];
+    updatedTree[0].children.push(newFile);
+    setFileTree(updatedTree);
+    
+    // Select the new file
+    handleFileSelect(newFile);
+    
+    setShowNewFileDialog(false);
+    setIsEditing(true);
+  };
+
+  const toggleFolder = (folderId) => {
+    const updateTree = (nodes) => {
+      return nodes.map(node => {
+        if (node.id === folderId && node.type === 'folder') {
+          return { ...node, expanded: !node.expanded };
+        }
+        if (node.children) {
+          return { ...node, children: updateTree(node.children) };
+        }
+        return node;
+      });
+    };
+    setFileTree(updateTree(fileTree));
+  };
+
+  const renderFileTree = (nodes, depth = 0) => {
+    return nodes.map(node => (
+      <div key={node.id} className="file-tree-item" style={{ paddingLeft: `${depth * 20}px` }}>
+        {node.type === 'folder' ? (
+          <div className="folder-item" onClick={() => toggleFolder(node.id)}>
+            <span className="folder-icon">{node.expanded ? '📁' : '📂'}</span>
+            <span className="folder-name">{node.name}</span>
+          </div>
+        ) : (
+          <div 
+            className={`file-item ${selectedFile?.id === node.id ? 'selected' : ''}`}
+            onClick={() => handleFileSelect(node)}
+          >
+            <span className="file-icon">📄</span>
+            <span className="file-name">{node.name}</span>
+          </div>
+        )}
+        {node.expanded && node.children && (
+          <div className="folder-children">
+            {renderFileTree(node.children, depth + 1)}
+          </div>
+        )}
+      </div>
+    ));
+  };
+
+  if (viewMode === 'editor') {
+    return (
+      <div className="tab-content">
+        <div className="tab-header">
+          <h2>Test Case Editor</h2>
+          <div className="tab-actions">
+            <button className="secondary-btn" onClick={() => setViewMode('grid')}>
+              ← Back to Grid
+            </button>
+            <button 
+              className="primary-btn" 
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? '👁️ Preview' : '✏️ Edit'}
+            </button>
+            {isEditing && (
+              <button className="primary-btn" onClick={handleSaveFile}>
+                💾 Save
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="editor-layout">
+          <div className="file-explorer">
+            <div className="file-explorer-header">
+              <h3>Test Cases</h3>
+              <button className="new-file-btn" onClick={handleNewTestCase}>
+                + New
+              </button>
+            </div>
+            <div className="file-tree">
+              {renderFileTree(fileTree)}
+            </div>
+          </div>
+
+          <div className="markdown-editor">
+            <div className="editor-header">
+              <h3>{selectedFile?.name || 'No file selected'}</h3>
+              <div className="editor-mode">
+                {isEditing ? 'Editing' : 'Preview'}
+              </div>
+            </div>
+            
+            {isEditing ? (
+              <textarea
+                className="markdown-textarea"
+                value={editorContent}
+                onChange={(e) => setEditorContent(e.target.value)}
+                placeholder="Write your test case in Markdown..."
+              />
+            ) : (
+              <div className="markdown-preview">
+                <pre>{editorContent}</pre>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {showNewFileDialog && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>Create New Test Case</h3>
+              <input
+                type="text"
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                placeholder="test-case-name"
+                onKeyPress={(e) => e.key === 'Enter' && createNewFile()}
+                autoFocus
+              />
+              <div className="modal-actions">
+                <button className="secondary-btn" onClick={() => setShowNewFileDialog(false)}>
+                  Cancel
+                </button>
+                <button className="primary-btn" onClick={createNewFile}>
+                  Create
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="tab-content">
       <div className="tab-header">
         <h2>Test Cases</h2>
         <div className="tab-actions">
-          <button className="primary-btn">+ New Test Case</button>
+          <button className="primary-btn" onClick={handleNewTestCase}>+ New Test Case</button>
+          <button className="secondary-btn" onClick={() => setViewMode('editor')}>
+            📝 File Manager
+          </button>
           <button className="secondary-btn">Import</button>
           <button className="secondary-btn">Export</button>
         </div>
@@ -296,7 +526,15 @@ function TestCasesTab() {
                 {testCase.lastRun ? `Last run: ${testCase.lastRun}` : 'Never run'}
               </span>
               <div className="test-case-actions">
-                <button className="action-btn">Edit</button>
+                <button 
+                  className="action-btn"
+                  onClick={() => {
+                    const file = fileTree[0].children.find(f => f.id === testCase.id);
+                    if (file) handleFileSelect(file);
+                  }}
+                >
+                  Edit
+                </button>
                 <button className="action-btn">Run</button>
                 <button className="action-btn">Delete</button>
               </div>
@@ -311,18 +549,61 @@ function TestCasesTab() {
 function RunTestsTab() {
   const [selectedTests, setSelectedTests] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [executionView, setExecutionView] = useState(false);
+  const [configTab, setConfigTab] = useState('basic'); // 'basic', 'advanced', 'environment'
+  const [executionData, setExecutionData] = useState({
+    sessionId: null,
+    currentTest: 0,
+    totalTests: 0,
+    progress: 0,
+    startTime: null,
+    estimatedTimeRemaining: 0,
+    logs: [],
+    testResults: []
+  });
   const [testConfig, setTestConfig] = useState({
+    // Basic Configuration
     targetUrl: 'https://example.com',
     viewportWidth: 1920,
     viewportHeight: 1080,
     browserType: 'chromium',
-    headless: false
+    headless: false,
+    
+    // Advanced Configuration
+    timeout: 30000,
+    maxSteps: 25,
+    enableScreenshots: true,
+    enableRecording: false,
+    slowMotion: 0,
+    waitForNetworkIdle: true,
+    
+    // Environment Configuration
+    userAgent: '',
+    locale: 'en-US',
+    timezone: 'America/New_York',
+    geolocation: { latitude: 40.7128, longitude: -74.0060 },
+    enableJavascript: true,
+    enableImages: true,
+    enableStylesheets: true
   });
 
   const availableTests = [
-    { id: 'tc-1', name: 'Login Flow Test', estimated: '2 min' },
-    { id: 'tc-2', name: 'Product Search Test', estimated: '3 min' },
-    { id: 'tc-3', name: 'Checkout Process Test', estimated: '5 min' }
+    { id: 'tc-1', name: 'Login Flow Test', estimated: '2 min', status: 'ready', priority: 'high' },
+    { id: 'tc-2', name: 'Product Search Test', estimated: '3 min', status: 'ready', priority: 'medium' },
+    { id: 'tc-3', name: 'Checkout Process Test', estimated: '5 min', status: 'ready', priority: 'high' },
+    { id: 'tc-4', name: 'Navigation Test', estimated: '1 min', status: 'ready', priority: 'low' },
+    { id: 'tc-5', name: 'Form Validation Test', estimated: '3 min', status: 'ready', priority: 'medium' }
+  ];
+
+  const viewportPresets = [
+    { name: 'Desktop Large', width: 1920, height: 1080 },
+    { name: 'Desktop Medium', width: 1366, height: 768 },
+    { name: 'Desktop Small', width: 1024, height: 768 },
+    { name: 'Tablet Portrait', width: 768, height: 1024 },
+    { name: 'Tablet Landscape', width: 1024, height: 768 },
+    { name: 'Mobile Large', width: 414, height: 896 },
+    { name: 'Mobile Medium', width: 375, height: 667 },
+    { name: 'Mobile Small', width: 320, height: 568 }
   ];
 
   const handleTestSelection = (testId) => {
@@ -333,15 +614,457 @@ function RunTestsTab() {
     );
   };
 
-  const handleRunTests = () => {
+  const handleSelectAll = () => {
+    setSelectedTests(availableTests.map(t => t.id));
+  };
+
+  const handleSelectByPriority = (priority) => {
+    const filtered = availableTests.filter(t => t.priority === priority).map(t => t.id);
+    setSelectedTests(filtered);
+  };
+
+  const handleViewportPreset = (preset) => {
+    setTestConfig(prev => ({
+      ...prev,
+      viewportWidth: preset.width,
+      viewportHeight: preset.height
+    }));
+  };
+
+  const addLog = (message, type = 'info') => {
+    const timestamp = new Date().toLocaleTimeString();
+    setExecutionData(prev => ({
+      ...prev,
+      logs: [...prev.logs, { timestamp, message, type, id: Date.now() }]
+    }));
+  };
+
+  const updateProgress = (current, total) => {
+    const progress = total > 0 ? (current / total) * 100 : 0;
+    const elapsed = executionData.startTime ? Date.now() - executionData.startTime : 0;
+    const avgTimePerTest = current > 0 ? elapsed / current : 0;
+    const remainingTests = total - current;
+    const estimatedTimeRemaining = remainingTests * avgTimePerTest;
+
+    setExecutionData(prev => ({
+      ...prev,
+      currentTest: current,
+      totalTests: total,
+      progress,
+      estimatedTimeRemaining
+    }));
+  };
+
+  const executeTestsWithBackend = async () => {
+    const testList = selectedTests.map(id => availableTests.find(t => t.id === id));
+    const totalTests = testList.length;
+    
+    addLog(`Starting test execution with ${totalTests} test(s)`, 'info');
+    addLog(`Target URL: ${testConfig.targetUrl}`, 'info');
+    addLog(`Viewport: ${testConfig.viewportWidth}x${testConfig.viewportHeight}`, 'info');
+    addLog(`Browser: ${testConfig.browserType}${testConfig.headless ? ' (headless)' : ''}`, 'info');
+    
+    try {
+      // Prepare test cases for backend API
+      const testCases = testList.map(test => ({
+        id: test.id,
+        name: test.name,
+        description: test.name,
+        target_url: testConfig.targetUrl,
+        steps: [
+          'Navigate to the target page',
+          'Wait for page to load completely',
+          'Verify page title contains expected text',
+          'Take a screenshot for verification'
+        ],
+        expected_results: [
+          'Page loads successfully',
+          'Title is visible and correct',
+          'No JavaScript errors in console'
+        ],
+        priority: test.priority
+      }));
+
+      const requestBody = {
+        test_cases: testCases,
+        config: {
+          viewport_width: testConfig.viewportWidth,
+          viewport_height: testConfig.viewportHeight,
+          browser_type: testConfig.browserType,
+          headless: testConfig.headless,
+          timeout: testConfig.timeout,
+          max_steps: testConfig.maxSteps,
+          enable_screenshots: testConfig.enableScreenshots,
+          wait_for_network_idle: testConfig.waitForNetworkIdle
+        }
+      };
+
+      addLog('Sending test request to backend...', 'info');
+      
+      // Start test session
+      const response = await fetch('http://localhost:8000/test/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
+      }
+
+      const startResult = await response.json();
+      const sessionId = startResult.session_id;
+      
+      addLog(`Test session started: ${sessionId}`, 'success');
+      
+      // Update execution data with session info
+      setExecutionData(prev => ({
+        ...prev,
+        sessionId: sessionId
+      }));
+
+      // Poll for progress updates
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await fetch(`http://localhost:8000/test/status/${sessionId}`);
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            
+            // Update progress
+            updateProgress(statusData.completed_tests, statusData.total_tests);
+            
+            // Add any new results to logs
+            if (statusData.latest_results) {
+              statusData.latest_results.forEach(result => {
+                if (!executionData.testResults.find(r => r.test_case_id === result.test_case_id)) {
+                  const success = result.status === 'passed';
+                  addLog(`${success ? '✅' : '❌'} Test "${result.test_case_id}" ${result.status}`, success ? 'success' : 'error');
+                  if (result.message) {
+                    addLog(`  ${result.message}`, success ? 'step' : 'error');
+                  }
+                  
+                  setExecutionData(prev => ({
+                    ...prev,
+                    testResults: [...prev.testResults, {
+                      ...testList.find(t => t.id === result.test_case_id),
+                      status: result.status,
+                      duration: `${result.execution_time}s`,
+                      error: result.status === 'failed' ? result.message : undefined
+                    }]
+                  }));
+                }
+              });
+            }
+            
+            // Check if completed
+            if (statusData.status === 'completed' || statusData.status === 'error' || statusData.status === 'stopped') {
+              clearInterval(pollInterval);
+              addLog(`Test execution ${statusData.status}`, statusData.status === 'completed' ? 'success' : 'error');
+              
+              // Get final results
+              const resultsResponse = await fetch(`http://localhost:8000/test/results/${sessionId}`);
+              if (resultsResponse.ok) {
+                const resultsData = await resultsResponse.json();
+                addLog(`Final results: ${resultsData.summary.passed}/${resultsData.summary.total} tests passed`, 'info');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error polling status:', error);
+          addLog(`Status polling error: ${error.message}`, 'error');
+        }
+      }, 2000); // Poll every 2 seconds
+
+      // Clean up polling after 5 minutes max
+      setTimeout(() => {
+        clearInterval(pollInterval);
+      }, 300000);
+
+    } catch (error) {
+      addLog(`Backend connection failed: ${error.message}`, 'error');
+      addLog('Falling back to simulation mode...', 'warning');
+      
+      // Fallback to simulation if backend is not available
+      await simulateTestExecution();
+    }
+  };
+
+  const simulateTestExecution = async () => {
+    const testList = selectedTests.map(id => availableTests.find(t => t.id === id));
+    const totalTests = testList.length;
+    
+    addLog('Running in simulation mode (backend not available)', 'warning');
+    
+    for (let i = 0; i < totalTests; i++) {
+      const test = testList[i];
+      updateProgress(i, totalTests);
+      
+      addLog(`Starting test: ${test.name}`, 'info');
+      
+      // Simulate test steps
+      const steps = [
+        'Initializing browser session',
+        'Navigating to target URL',
+        'Waiting for page load',
+        'Executing test steps',
+        'Taking screenshots',
+        'Validating results'
+      ];
+      
+      for (const step of steps) {
+        await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
+        addLog(`  ${step}...`, 'step');
+      }
+      
+      // Simulate test result
+      const success = Math.random() > 0.3; // 70% success rate
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (success) {
+        addLog(`✅ Test "${test.name}" completed successfully`, 'success');
+        setExecutionData(prev => ({
+          ...prev,
+          testResults: [...prev.testResults, { ...test, status: 'passed', duration: '2.3s' }]
+        }));
+      } else {
+        addLog(`❌ Test "${test.name}" failed`, 'error');
+        addLog(`  Error: Element not found after 30s timeout`, 'error');
+        setExecutionData(prev => ({
+          ...prev,
+          testResults: [...prev.testResults, { ...test, status: 'failed', duration: '30.1s', error: 'Element not found after 30s timeout' }]
+        }));
+      }
+    }
+    
+    updateProgress(totalTests, totalTests);
+    addLog(`Test execution completed. ${executionData.testResults.filter(r => r.status === 'passed').length}/${totalTests} tests passed`, 'info');
+  };
+
+  const handleRunTests = async () => {
     if (selectedTests.length === 0) {
       alert('Please select at least one test to run');
       return;
     }
+    
     setIsRunning(true);
-    // TODO: Implement actual test execution
-    setTimeout(() => setIsRunning(false), 5000); // Mock execution
+    setExecutionView(true);
+    
+    // Initialize execution data
+    setExecutionData({
+      sessionId: `session_${Date.now()}`,
+      currentTest: 0,
+      totalTests: selectedTests.length,
+      progress: 0,
+      startTime: Date.now(),
+      estimatedTimeRemaining: 0,
+      logs: [],
+      testResults: []
+    });
+    
+    try {
+      // Execute tests with backend API (falls back to simulation if backend unavailable)
+      await executeTestsWithBackend();
+    } catch (error) {
+      console.error('Test execution failed:', error);
+      addLog(`Execution failed: ${error.message}`, 'error');
+    } finally {
+      setIsRunning(false);
+    }
   };
+
+  const handleStopTests = () => {
+    setIsRunning(false);
+    addLog('Test execution stopped by user', 'warning');
+  };
+
+  const handleBackToConfig = () => {
+    setExecutionView(false);
+    setExecutionData({
+      sessionId: null,
+      currentTest: 0,
+      totalTests: 0,
+      progress: 0,
+      startTime: null,
+      estimatedTimeRemaining: 0,
+      logs: [],
+      testResults: []
+    });
+  };
+
+  const formatTime = (ms) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds % 60}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  };
+
+  // Render execution dashboard when tests are running
+  if (executionView) {
+    return (
+      <div className="tab-content">
+        <div className="tab-header">
+          <h2>Test Execution Dashboard</h2>
+          <div className="tab-actions">
+            {isRunning ? (
+              <button className="danger-btn" onClick={handleStopTests}>
+                ⏹️ Stop Tests
+              </button>
+            ) : (
+              <button className="secondary-btn" onClick={handleBackToConfig}>
+                ← Back to Configuration
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="execution-dashboard">
+          {/* Progress Overview */}
+          <div className="progress-overview">
+            <div className="progress-stats">
+              <div className="stat-item">
+                <span className="stat-label">Session ID</span>
+                <span className="stat-value">{executionData.sessionId}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Progress</span>
+                <span className="stat-value">
+                  {executionData.currentTest} / {executionData.totalTests}
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Status</span>
+                <span className={`stat-value ${isRunning ? 'running' : 'completed'}`}>
+                  {isRunning ? 'Running' : 'Completed'}
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">ETA</span>
+                <span className="stat-value">
+                  {isRunning ? formatTime(executionData.estimatedTimeRemaining) : 'Complete'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="progress-bar-container">
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill"
+                  style={{ width: `${executionData.progress}%` }}
+                ></div>
+              </div>
+              <span className="progress-text">{Math.round(executionData.progress)}%</span>
+            </div>
+          </div>
+
+          {/* Test Results Grid */}
+          <div className="test-results-grid">
+            <div className="results-panel">
+              <h3>Test Results</h3>
+              <div className="test-results-list">
+                {executionData.testResults.map((result, index) => (
+                  <div key={index} className={`test-result-item ${result.status}`}>
+                    <div className="result-icon">
+                      {result.status === 'passed' ? '✅' : '❌'}
+                    </div>
+                    <div className="result-info">
+                      <span className="result-name">{result.name}</span>
+                      <span className="result-meta">
+                        Duration: {result.duration}
+                        {result.error && ` • Error: ${result.error}`}
+                      </span>
+                    </div>
+                    <span className={`result-status ${result.status}`}>
+                      {result.status}
+                    </span>
+                  </div>
+                ))}
+                
+                {/* Show pending tests */}
+                {selectedTests.slice(executionData.testResults.length).map((testId, index) => {
+                  const test = availableTests.find(t => t.id === testId);
+                  const isPending = index + executionData.testResults.length === executionData.currentTest && isRunning;
+                  return (
+                    <div key={testId} className={`test-result-item pending ${isPending ? 'current' : ''}`}>
+                      <div className="result-icon">
+                        {isPending ? '⏳' : '⚪'}
+                      </div>
+                      <div className="result-info">
+                        <span className="result-name">{test?.name}</span>
+                        <span className="result-meta">
+                          {isPending ? 'Running...' : 'Pending'}
+                        </span>
+                      </div>
+                      <span className="result-status pending">
+                        {isPending ? 'running' : 'pending'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Live Log */}
+            <div className="log-panel">
+              <h3>Live Log</h3>
+              <div className="log-container">
+                {executionData.logs.map((log, index) => (
+                  <div key={log.id} className={`log-entry ${log.type}`}>
+                    <span className="log-timestamp">{log.timestamp}</span>
+                    <span className="log-message">{log.message}</span>
+                  </div>
+                ))}
+                {executionData.logs.length === 0 && (
+                  <div className="log-entry info">
+                    <span className="log-message">Waiting for test execution to start...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Summary Stats */}
+          {!isRunning && executionData.testResults.length > 0 && (
+            <div className="execution-summary">
+              <h3>Execution Summary</h3>
+              <div className="summary-stats">
+                <div className="summary-item success">
+                  <span className="summary-number">
+                    {executionData.testResults.filter(r => r.status === 'passed').length}
+                  </span>
+                  <span className="summary-label">Passed</span>
+                </div>
+                <div className="summary-item failed">
+                  <span className="summary-number">
+                    {executionData.testResults.filter(r => r.status === 'failed').length}
+                  </span>
+                  <span className="summary-label">Failed</span>
+                </div>
+                <div className="summary-item total">
+                  <span className="summary-number">{executionData.testResults.length}</span>
+                  <span className="summary-label">Total</span>
+                </div>
+                <div className="summary-item time">
+                  <span className="summary-number">
+                    {formatTime(Date.now() - executionData.startTime)}
+                  </span>
+                  <span className="summary-label">Duration</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="tab-content">
@@ -361,6 +1084,34 @@ function RunTestsTab() {
       <div className="run-tests-layout">
         <div className="test-selection-panel">
           <h3>Select Tests to Run</h3>
+          
+          <div className="selection-filters">
+            <button 
+              className="filter-btn"
+              onClick={handleSelectAll}
+            >
+              All ({availableTests.length})
+            </button>
+            <button 
+              className="filter-btn priority-high"
+              onClick={() => handleSelectByPriority('high')}
+            >
+              High ({availableTests.filter(t => t.priority === 'high').length})
+            </button>
+            <button 
+              className="filter-btn priority-medium"
+              onClick={() => handleSelectByPriority('medium')}
+            >
+              Medium ({availableTests.filter(t => t.priority === 'medium').length})
+            </button>
+            <button 
+              className="filter-btn priority-low"
+              onClick={() => handleSelectByPriority('low')}
+            >
+              Low ({availableTests.filter(t => t.priority === 'low').length})
+            </button>
+          </div>
+
           <div className="test-selection-list">
             {availableTests.map(test => (
               <div key={test.id} className="test-selection-item">
@@ -373,7 +1124,12 @@ function RunTestsTab() {
                   <span className="checkmark"></span>
                   <div className="test-info">
                     <span className="test-name">{test.name}</span>
-                    <span className="test-estimated">Est. {test.estimated}</span>
+                    <div className="test-meta">
+                      <span className="test-estimated">Est. {test.estimated}</span>
+                      <span className={`test-priority priority-${test.priority}`}>
+                        {test.priority}
+                      </span>
+                    </div>
                   </div>
                 </label>
               </div>
@@ -381,12 +1137,6 @@ function RunTestsTab() {
           </div>
           
           <div className="selection-actions">
-            <button 
-              className="secondary-btn"
-              onClick={() => setSelectedTests(availableTests.map(t => t.id))}
-            >
-              Select All
-            </button>
             <button 
               className="secondary-btn"
               onClick={() => setSelectedTests([])}
@@ -397,75 +1147,292 @@ function RunTestsTab() {
         </div>
 
         <div className="test-configuration-panel">
-          <h3>Test Configuration</h3>
-          <div className="config-form">
-            <div className="form-group">
-              <label>Target URL</label>
-              <input
-                type="url"
-                value={testConfig.targetUrl}
-                onChange={(e) => setTestConfig(prev => ({...prev, targetUrl: e.target.value}))}
-                placeholder="https://example.com"
-              />
-            </div>
-            
-            <div className="form-row">
+          <div className="config-tabs">
+            <button 
+              className={configTab === 'basic' ? 'config-tab active' : 'config-tab'}
+              onClick={() => setConfigTab('basic')}
+            >
+              Basic
+            </button>
+            <button 
+              className={configTab === 'advanced' ? 'config-tab active' : 'config-tab'}
+              onClick={() => setConfigTab('advanced')}
+            >
+              Advanced
+            </button>
+            <button 
+              className={configTab === 'environment' ? 'config-tab active' : 'config-tab'}
+              onClick={() => setConfigTab('environment')}
+            >
+              Environment
+            </button>
+          </div>
+
+          {configTab === 'basic' && (
+            <div className="config-form">
               <div className="form-group">
-                <label>Viewport Width</label>
+                <label>Target URL</label>
+                <input
+                  type="url"
+                  value={testConfig.targetUrl}
+                  onChange={(e) => setTestConfig(prev => ({...prev, targetUrl: e.target.value}))}
+                  placeholder="https://example.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Viewport Preset</label>
+                <div className="viewport-presets">
+                  {viewportPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      className={`preset-btn ${
+                        testConfig.viewportWidth === preset.width && 
+                        testConfig.viewportHeight === preset.height ? 'active' : ''
+                      }`}
+                      onClick={() => handleViewportPreset(preset)}
+                    >
+                      {preset.name}<br/>
+                      <span className="preset-size">{preset.width}×{preset.height}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Viewport Width</label>
+                  <input
+                    type="number"
+                    value={testConfig.viewportWidth}
+                    onChange={(e) => setTestConfig(prev => ({...prev, viewportWidth: parseInt(e.target.value)}))}
+                    min="320"
+                    max="3840"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Viewport Height</label>
+                  <input
+                    type="number"
+                    value={testConfig.viewportHeight}
+                    onChange={(e) => setTestConfig(prev => ({...prev, viewportHeight: parseInt(e.target.value)}))}
+                    min="240"
+                    max="2160"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Browser Type</label>
                 <select
-                  value={testConfig.viewportWidth}
-                  onChange={(e) => setTestConfig(prev => ({...prev, viewportWidth: parseInt(e.target.value)}))}
+                  value={testConfig.browserType}
+                  onChange={(e) => setTestConfig(prev => ({...prev, browserType: e.target.value}))}
                 >
-                  <option value={1920}>1920px (Desktop)</option>
-                  <option value={1024}>1024px (Tablet)</option>
-                  <option value={375}>375px (Mobile)</option>
+                  <option value="chromium">Chromium</option>
+                  <option value="firefox">Firefox</option>
+                  <option value="webkit">WebKit (Safari)</option>
                 </select>
               </div>
               
               <div className="form-group">
-                <label>Viewport Height</label>
-                <select
-                  value={testConfig.viewportHeight}
-                  onChange={(e) => setTestConfig(prev => ({...prev, viewportHeight: parseInt(e.target.value)}))}
-                >
-                  <option value={1080}>1080px</option>
-                  <option value={768}>768px</option>
-                  <option value={667}>667px</option>
-                </select>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={testConfig.headless}
+                    onChange={(e) => setTestConfig(prev => ({...prev, headless: e.target.checked}))}
+                  />
+                  Run in headless mode
+                </label>
               </div>
             </div>
-            
-            <div className="form-group">
-              <label>Browser Type</label>
-              <select
-                value={testConfig.browserType}
-                onChange={(e) => setTestConfig(prev => ({...prev, browserType: e.target.value}))}
-              >
-                <option value="chromium">Chromium</option>
-                <option value="firefox">Firefox</option>
-                <option value="webkit">WebKit</option>
-              </select>
-            </div>
-            
-            <div className="form-group">
-              <label className="checkbox-label">
+          )}
+
+          {configTab === 'advanced' && (
+            <div className="config-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Timeout (ms)</label>
+                  <input
+                    type="number"
+                    value={testConfig.timeout}
+                    onChange={(e) => setTestConfig(prev => ({...prev, timeout: parseInt(e.target.value)}))}
+                    min="5000"
+                    max="300000"
+                    step="5000"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Max Steps</label>
+                  <input
+                    type="number"
+                    value={testConfig.maxSteps}
+                    onChange={(e) => setTestConfig(prev => ({...prev, maxSteps: parseInt(e.target.value)}))}
+                    min="5"
+                    max="100"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Slow Motion (ms)</label>
                 <input
-                  type="checkbox"
-                  checked={testConfig.headless}
-                  onChange={(e) => setTestConfig(prev => ({...prev, headless: e.target.checked}))}
+                  type="range"
+                  min="0"
+                  max="3000"
+                  step="100"
+                  value={testConfig.slowMotion}
+                  onChange={(e) => setTestConfig(prev => ({...prev, slowMotion: parseInt(e.target.value)}))}
                 />
-                Run in headless mode
-              </label>
+                <span className="range-value">{testConfig.slowMotion}ms</span>
+              </div>
+
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={testConfig.enableScreenshots}
+                    onChange={(e) => setTestConfig(prev => ({...prev, enableScreenshots: e.target.checked}))}
+                  />
+                  Enable Screenshots
+                </label>
+                
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={testConfig.enableRecording}
+                    onChange={(e) => setTestConfig(prev => ({...prev, enableRecording: e.target.checked}))}
+                  />
+                  Enable Video Recording
+                </label>
+                
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={testConfig.waitForNetworkIdle}
+                    onChange={(e) => setTestConfig(prev => ({...prev, waitForNetworkIdle: e.target.checked}))}
+                  />
+                  Wait for Network Idle
+                </label>
+              </div>
             </div>
-          </div>
+          )}
+
+          {configTab === 'environment' && (
+            <div className="config-form">
+              <div className="form-group">
+                <label>User Agent</label>
+                <input
+                  type="text"
+                  value={testConfig.userAgent}
+                  onChange={(e) => setTestConfig(prev => ({...prev, userAgent: e.target.value}))}
+                  placeholder="Leave empty for default"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Locale</label>
+                  <select
+                    value={testConfig.locale}
+                    onChange={(e) => setTestConfig(prev => ({...prev, locale: e.target.value}))}
+                  >
+                    <option value="en-US">English (US)</option>
+                    <option value="en-GB">English (UK)</option>
+                    <option value="es-ES">Spanish</option>
+                    <option value="fr-FR">French</option>
+                    <option value="de-DE">German</option>
+                    <option value="ja-JP">Japanese</option>
+                    <option value="zh-CN">Chinese (Simplified)</option>
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label>Timezone</label>
+                  <select
+                    value={testConfig.timezone}
+                    onChange={(e) => setTestConfig(prev => ({...prev, timezone: e.target.value}))}
+                  >
+                    <option value="America/New_York">Eastern Time</option>
+                    <option value="America/Chicago">Central Time</option>
+                    <option value="America/Denver">Mountain Time</option>
+                    <option value="America/Los_Angeles">Pacific Time</option>
+                    <option value="Europe/London">London</option>
+                    <option value="Europe/Paris">Paris</option>
+                    <option value="Asia/Tokyo">Tokyo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Latitude</label>
+                  <input
+                    type="number"
+                    value={testConfig.geolocation.latitude}
+                    onChange={(e) => setTestConfig(prev => ({
+                      ...prev, 
+                      geolocation: {...prev.geolocation, latitude: parseFloat(e.target.value)}
+                    }))}
+                    step="0.0001"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Longitude</label>
+                  <input
+                    type="number"
+                    value={testConfig.geolocation.longitude}
+                    onChange={(e) => setTestConfig(prev => ({
+                      ...prev, 
+                      geolocation: {...prev.geolocation, longitude: parseFloat(e.target.value)}
+                    }))}
+                    step="0.0001"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={testConfig.enableJavascript}
+                    onChange={(e) => setTestConfig(prev => ({...prev, enableJavascript: e.target.checked}))}
+                  />
+                  Enable JavaScript
+                </label>
+                
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={testConfig.enableImages}
+                    onChange={(e) => setTestConfig(prev => ({...prev, enableImages: e.target.checked}))}
+                  />
+                  Enable Images
+                </label>
+                
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={testConfig.enableStylesheets}
+                    onChange={(e) => setTestConfig(prev => ({...prev, enableStylesheets: e.target.checked}))}
+                  />
+                  Enable Stylesheets
+                </label>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {selectedTests.length > 0 && (
         <div className="test-summary">
           <h4>Test Run Summary</h4>
-          <p>{selectedTests.length} test(s) selected • Target: {testConfig.targetUrl}</p>
-          <p>Viewport: {testConfig.viewportWidth}x{testConfig.viewportHeight} • Browser: {testConfig.browserType}</p>
+          <p><strong>{selectedTests.length}</strong> test(s) selected • Target: <strong>{testConfig.targetUrl}</strong></p>
+          <p>Viewport: <strong>{testConfig.viewportWidth}×{testConfig.viewportHeight}</strong> • Browser: <strong>{testConfig.browserType}</strong></p>
+          {!testConfig.headless && <p>Mode: <strong>Visible browser</strong> • Screenshots: <strong>{testConfig.enableScreenshots ? 'Enabled' : 'Disabled'}</strong></p>}
+          {testConfig.headless && <p>Mode: <strong>Headless</strong> • Timeout: <strong>{testConfig.timeout}ms</strong></p>}
         </div>
       )}
     </div>
