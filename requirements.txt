@@ -1,0 +1,3 @@
+browser-use==0.4.4
+google-generativeai
+python-dotenv
