@@ -1501,8 +1501,6 @@ Check that the footer contains copyright information`;
       const requestBody = {
         test_cases: testCases,
         config: {
-          viewport_width: 1920,
-          viewport_height: 1080,
           browser_type: 'chromium',
           headless: false,
           timeout: 30000,

@@ -53,6 +53,7 @@ class TestAgent:
                 browser_profile = BrowserProfile(
                     browser_type=self.config.get("browser_type", "chromium"),
                     headless=self.config.get("headless", False),
+                    viewport=None,
                     # Do NOT set viewport or window_size - let Chrome handle window sizing
                     wait_for_network_idle_page_load_time=3.0,
                     extra_chromium_args=[

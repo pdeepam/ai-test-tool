@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack'); // Add this line
 
 module.exports = {
   entry: './src/renderer/index.jsx',
@@ -33,6 +34,10 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './src/renderer/index.html',
       filename: 'index.html',
+    }),
+    // Add this plugin
+    new webpack.ProvidePlugin({
+      global: 'global',
     }),
   ],
   devServer: {
