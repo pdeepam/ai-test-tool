@@ -45,6 +45,7 @@ class TestConfig(BaseModel):
     browser_type: str = "chromium"
     headless: bool = False
     timeout: int = 30000
+    keep_browser_open: bool = False
 
 class TestRequest(BaseModel):
     test_cases: List[TestCase]

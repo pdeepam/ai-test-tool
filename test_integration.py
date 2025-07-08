@@ -42,7 +42,8 @@ def test_simple_navigation():
             "timeout": 30000,
             "max_steps": 25,
             "enable_screenshots": True,
-            "wait_for_network_idle": True
+            "wait_for_network_idle": True,
+            "keep_browser_open": True  # Keep browser open after test for inspection
         }
     }
     

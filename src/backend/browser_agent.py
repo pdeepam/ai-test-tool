@@ -48,14 +48,12 @@ class TestAgent:
             if not use_existing_chrome:
                 # Create new browser instance
                 logger.info("Creating new Chromium browser instance")
+
                 
                 browser_profile = BrowserProfile(
                     browser_type=self.config.get("browser_type", "chromium"),
                     headless=self.config.get("headless", False),
-                    viewport={
-                        "width": self.config.get("viewport_width", 1920),
-                        "height": self.config.get("viewport_height", 1200)
-                    },
+                    # Do NOT set viewport or window_size - let Chrome handle window sizing
                     wait_for_network_idle_page_load_time=3.0,
                     extra_chromium_args=[
                         "--no-first-run",           # Skip first-run experience
@@ -63,10 +61,7 @@ class TestAgent:
                         "--disable-default-apps",   # Don't load default apps
                         "--disable-extensions",     # Disable extensions
                         "--start-maximized",        # Start maximized
-                        "--start-fullscreen",       # Start in fullscreen
-                        "--window-size=1920,1200", # Set window size
-                        "--window-position=0,0",   # Set window position
-                        "--force-device-scale-factor=1", # Prevent scaling issues
+                        "--disable-popup-blocking", # Disable popup blocking
                         "--disable-background-timer-throttling",  # Better for automation
                         "--disable-renderer-backgrounding",       # Better for automation
                         "--disable-backgrounding-occluded-windows", # Better for automation
@@ -208,8 +203,11 @@ class TestAgent:
         """Clean up browser resources"""
         try:
             if self.browser_session:
-                await self.browser_session.close()
-                logger.info(f"Browser session closed for test: {self.test_case['name']}")
+                if not self.config.get('keep_browser_open', False):
+                    await self.browser_session.close()
+                    logger.info(f"Browser session closed for test: {self.test_case['name']}")
+                else:
+                    logger.info(f"Browser session kept open for test: {self.test_case['name']}")
         except Exception as e:
             logger.error(f"Error closing browser session for {self.test_case['name']}: {e}")
 
