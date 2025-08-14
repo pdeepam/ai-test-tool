@@ -127,3 +127,7 @@ dist/
 *.deb
 *.rpm
 *.snap
+
+# Sensitive Data
+src/backend/browser_sessions/
+.claude/
